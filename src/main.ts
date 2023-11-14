@@ -1,19 +1,31 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { CorsOptions } from '@nestjs/common/interfaces/external/cors-options.interface';
+import * as https from 'https';
+import * as fs from 'fs';
+import * as express from 'express';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+    // Lire les certificats SSL/TLS
+    const httpsOptions = {
+        key: fs.readFileSync('./privkey.pem'), // Utiliser la nouvelle clé privée
+        cert: fs.readFileSync('./fullchain.pem'),
+        // passphrase:'VGTU',
+    };
 
-  const corsOptions: CorsOptions = {
-    origin: 'http://localhost:5173',
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    allowedHeaders: 'Content-Type, Accept',
-    optionsSuccessStatus: 200,
-  };
+    const app = await NestFactory.create(AppModule, { httpsOptions });
 
-  app.enableCors(corsOptions);
+    const corsOptions: CorsOptions = {
+        origin: 'https://localhost:5173',
+        methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+        allowedHeaders: 'Content-Type, Accept',
+        optionsSuccessStatus: 200,
+    };
 
-  await app.listen(3000);
+    app.enableCors(corsOptions);
+
+    await app.listen(3000);
 }
+
 bootstrap();
+
